@@ -1,0 +1,152 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `brfss2013`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+* * *
+
+## Part 1: Data
+
+In this 2013 case, The Behavioral Risk Factor Survaliance System (BRFSS) collects data from all the states in the US as well as participating U.S. Territories. The BRFSS conducts both landline telephone and cellular telephone based surveys. Starting in 1984, the BRFSS collects data from randomly chosen adults through monthly interviews with the intention to measure behavioral risk factors. Some of the factors included in this case include tobacco use, HIV/AIDS knowledge and prevention, exercise,health status, inadequate sleep, alcohol consumption, and seatbelt use. The full BRFSS has been reduced to 491,775 observations with 330 different variables.
+
+Generabizability:
+The BRFSS collects their data from randomly selected adults living in eligible households. This data is collected throught monthly interviews in order to avoid seasonal disparities. Therefore, this data can be generalized to adults who live within the US states and participating U.S. Territories.
+
+Casuality:
+Since this is an observational study rather than an experimental design, no random assignment was used. This means that causality cannot be inferred.
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+Explore the difference of the effects of tobacco usage on an individual's health between males and females. Is there a difference between males and females and the effects of tobacco usage on their health?
+
+# Variables Used:
+sex - Responders Sex
+smokday2 - Frequency of Days Now Smoking
+usenow3 - Use of Smokeless Tobacco Products
+genhlth - General Health
+
+
+**Research quesion 2:**
+Explore the correlation between income levels and general health. Do those who have a higher income tend to have a healthier life than those who make significantly less?
+
+# Variables Used:
+genhlth - General Health
+X_incomg - Computed income categories
+qlactlm2 - Activity Limitation Due To Health Problems
+
+
+**Research quesion 3:**
+Identify if there is a correlation between excerising and having diabetes. Is there is a significant differenct between those who excersices in the last 30 days compared to those who haven't?
+
+# Variables Used:
+exerany2 - Yes/No excercize
+diabete3 - Yes/No diabetes
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+**Research quesion 1:**
+Compare/Contrast the general health between males and females who use tobacco.
+Firstly, we need to filter the data to observe the people who consume tobacco products on a daily basis. Then, we will group the data according to geneder (female and male) and overall health levels (Poor, Fair, Good, Very Good, Excellent).
+
+```{r}
+tobacco_use <- brfss2013 %>% 
+  filter(dispcode == "Completed interview" ,
+           (smokday2 == "Every day"| usenow3 == "Every day"), 
+         !is.na(genhlth) , !is.na(sex)) %>% 
+  group_by(genhlth, sex) %>%
+  summarise(num_people = n()) %>%
+  arrange(desc(num_people))
+
+tobacco_use
+
+```
+
+```{r}
+ggplot(tobacco_use, aes(x = sex, y = num_people, fill = genhlth)) +
+  geom_bar(stat = "identity") + ggtitle("Affect of daily tobacco usage") + 
+      labs(x="Sex",y="Number of people") +
+      guides(fill=guide_legend(title="General Health"))
+```
+
+# Conclusion
+In conclusion, there is an insignificant disparity between males and females. Based on the graph plotted above, both groups follow a similar general health trend regardless of gender. 
+
+**Research quesion 2:**
+Determine any trends between a person's salary and their health level.
+The first set is to filter the data by to observe the people who have completed the interview. Then, we will group the data according to the annual income of the participant and overall health levels (Poor, Fair, Good, Very Good, Excellent).
+```{r}
+income_levels <- brfss2013 %>% 
+  filter(dispcode == "Completed interview" ,
+         !is.na(genhlth) , !is.na(X_incomg)) %>%
+  group_by(genhlth, X_incomg) %>%
+  summarise(num_people = n()) %>%
+  arrange(desc(X_incomg, num_people))
+
+income_levels
+
+```
+
+```{r}
+ggplot(income_levels, aes(x = X_incomg, y = num_people, fill = genhlth)) +
+  geom_histogram(stat = "identity") + ggtitle("Affect of income on health") + 
+      labs(x="Income Level",y="Number of people") +
+      guides(fill=guide_legend(title="General Health"))
+```
+# Conclusion
+According to the graph plotted above, populations with a higher income tend to be more healthier than those with a lower income. This is reasonable because those with more money are able to pay for health care and other facilities thay may not be affordable for the poor.
+
+**Research quesion 3:**
+Determine whether doing excerice reduced the chances of having diabites
+Firstly, we need to filter the data to observe the people who have completed the interview in order to avoid any potential disparity Then, we will group the data according to having excercised in the past 30 days and if they have diabetes.
+
+```{r}
+excercise <- brfss2013 %>% 
+  filter(dispcode == "Completed interview" ,
+         !is.na(exerany2) , !is.na(diabete3)) %>%
+  group_by(exerany2, diabete3) %>%
+  summarise(num_people = n()) %>%
+  arrange(desc(num_people))
+
+excercise
+
+```
+
+```{r}
+ ggplot(excercise, aes(x = exerany2, y = num_people, fill = diabete3)) +
+  geom_histogram(stat = "identity") + ggtitle("Affect of excercise") + 
+      labs(x="Excercise",y="Number of people") +
+      guides(fill=guide_legend(title="Diabetes"))
+```
+# Conclusion
+Based on these visualizations, there is a larger percentage of people with diabetes among people who have not excercised in the past 30 days compared to people who have excercised. This is not surprising since exercising helps keep the body healthy and avoid problems like diabetes.
+
+
+
+
+
